@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,90 +15,86 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sirupsen/logrus"
 )
 
 const cgDir string = "/sys/fs/cgroup/system.slice/"
 
-/*
-var fooMetric = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "foo_metric", Help: "Shows whether a foo has occurred in out cluster"})
-
-var barMetric = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "bar_metric", Help: "Shows whether a bar has occurred in out cluster"})
-
-func init() {
-	// Register metrics with prometheus
-	prometheus.MustRegister(fooMetric)
-	prometheus.MustRegister(barMetric)
-
-	// Set fooMetric to 1
-	fooMetric.Set(1)
-	// Ste barMetric to 0
-	barMetric.Set(0)
-}
-*/
-
 func main() {
+	var argIP = flag.String("listen_ip", "", "IP to listen on, defaults to all IPs")
+	var argPort = flag.Int("port", 8888, "port to listen")
+	flag.Parse()
 
-	cgItems, err := ioutil.ReadDir(cgDir)
-	if err != nil {
-		log.Fatal(err)
-	}
+	cgItems := cgServices()
 	stats := make(map[string]memoryStat)
 
 	for _, item := range cgItems {
-		if item.IsDir() && strings.HasSuffix(item.Name(), ".service") {
+		stat := &memoryStat{}
 
-			stat := &memoryStat{}
-
-			if err := memStat(item.Name(), stat); err != nil {
-				log.Fatalln(err)
-			}
-
-			stats[item.Name()] = *stat
+		if err := memStat(item, stat); err != nil {
+			log.Fatalln(err)
 		}
+
+		stats[item] = *stat
 	}
 
-	for k, v := range stats {
-		fmt.Printf("%s: %+v\n\n", k, v)
+	for _, item := range cgItems {
+		memoryAnon.WithLabelValues(item).Set(float64(stats[item].Anon))
+		memoryFile.WithLabelValues(item).Set(float64(stats[item].File))
+		memoryKernelStack.WithLabelValues(item).Set(float64(stats[item].KernelStack))
+		memorySlab.WithLabelValues(item).Set(float64(stats[item].Slab))
+		memorySock.WithLabelValues(item).Set(float64(stats[item].Sock))
+		memoryShmem.WithLabelValues(item).Set(float64(stats[item].Shmem))
+		memoryFileMapped.WithLabelValues(item).Set(float64(stats[item].FileMapped))
+		memoryFileDirty.WithLabelValues(item).Set(float64(stats[item].FileDirty))
+		memoryFileWriteback.WithLabelValues(item).Set(float64(stats[item].FileWriteback))
+		memoryInactiveAnon.WithLabelValues(item).Set(float64(stats[item].InactiveAnon))
+		memoryActiveAnon.WithLabelValues(item).Set(float64(stats[item].ActiveAnon))
+		memoryInactiveFile.WithLabelValues(item).Set(float64(stats[item].InactiveFile))
+		memoryActiveFile.WithLabelValues(item).Set(float64(stats[item].ActiveFile))
+		memoryUnevictable.WithLabelValues(item).Set(float64(stats[item].Unevictable))
+		memorySlabReclaimable.WithLabelValues(item).Set(float64(stats[item].SlabReclaimable))
+		memorySlabUnreclaimable.WithLabelValues(item).Set(float64(stats[item].SlabUnreclaimable))
+		memoryPgfault.WithLabelValues(item).Set(float64(stats[item].Pgfault))
+		memoryPgmajfault.WithLabelValues(item).Set(float64(stats[item].Pgmajfault))
+		memoryPgrefill.WithLabelValues(item).Set(float64(stats[item].Pgrefill))
+		memoryPgscan.WithLabelValues(item).Set(float64(stats[item].Pgscan))
+		memoryPgsteal.WithLabelValues(item).Set(float64(stats[item].Pgsteal))
+		memoryPgactivate.WithLabelValues(item).Set(float64(stats[item].Pgactivate))
+		memoryPgdeactivate.WithLabelValues(item).Set(float64(stats[item].Pgdeactivate))
+		memoryPglazyfree.WithLabelValues(item).Set(float64(stats[item].Pglazyfree))
+		memoryPglazyfreed.WithLabelValues(item).Set(float64(stats[item].Pglazyfreed))
+		memoryWorkingsetRefault.WithLabelValues(item).Set(float64(stats[item].WorkingsetRefault))
+		memoryWorkingsetActivate.WithLabelValues(item).Set(float64(stats[item].WorkingsetActivate))
+		memoryWorkingsetNodereclaim.WithLabelValues(item).Set(float64(stats[item].WorkingsetNodereclaim))
 	}
 
 	http.Handle("/metrics", promhttp.Handler())
-	logrus.Info("Beginning to sever on port :8000")
-	logrus.Fatal(http.ListenAndServe(":8000", nil))
+
+	addr := fmt.Sprintf("%s:%d", *argIP, *argPort)
+	log.Println("Starting web server on: ", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		log.Fatal("ListenAndServe:", err)
+	}
 
 }
 
-type memoryStat struct {
-	anon                   uint64
-	file                   uint64
-	kernel_stack           uint64
-	slab                   uint64
-	sock                   uint64
-	shmem                  uint64
-	file_mapped            uint64
-	file_dirty             uint64
-	file_writeback         uint64
-	inactive_anon          uint64
-	active_anon            uint64
-	inactive_file          uint64
-	active_file            uint64
-	unevictable            uint64
-	slab_reclaimable       uint64
-	slab_unreclaimable     uint64
-	pgfault                uint64
-	pgmajfault             uint64
-	pgrefill               uint64
-	pgscan                 uint64
-	pgsteal                uint64
-	pgactivate             uint64
-	pgdeactivate           uint64
-	pglazyfree             uint64
-	pglazyfreed            uint64
-	workingset_refault     uint64
-	workingset_activate    uint64
-	workingset_nodereclaim uint64
+func cgServices() (items []string) {
+	entries, err := ioutil.ReadDir(cgDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, item := range entries {
+		if !item.IsDir() {
+			continue
+		}
+		if !strings.HasSuffix(item.Name(), ".service") {
+			continue
+		}
+		items = append(items, item.Name())
+	}
+
+	return
 }
 
 func memStat(item string, stat *memoryStat) error {
@@ -122,34 +119,34 @@ func memStat(item string, stat *memoryStat) error {
 		return err
 	}
 
-	stat.anon += raw["anon"]
-	stat.file += raw["file"]
-	stat.kernel_stack += raw["kernel_stack"]
-	stat.slab += raw["slab"]
-	stat.sock += raw["sock"]
-	stat.shmem += raw["shmem"]
-	stat.file_mapped += raw["file_mapped"]
-	stat.file_dirty += raw["file_dirty"]
-	stat.file_writeback += raw["file_writeback"]
-	stat.inactive_anon += raw["inactive_anon"]
-	stat.active_anon += raw["active_anon"]
-	stat.inactive_file += raw["inactive_file"]
-	stat.active_file += raw["active_file"]
-	stat.unevictable += raw["unevictable"]
-	stat.slab_reclaimable += raw["slab_reclaimable"]
-	stat.slab_unreclaimable += raw["slab_unreclaimable"]
-	stat.pgfault += raw["pgfault"]
-	stat.pgmajfault += raw["pgmajfault"]
-	stat.pgrefill += raw["pgrefill"]
-	stat.pgscan += raw["pgscan"]
-	stat.pgsteal += raw["pgsteal"]
-	stat.pgactivate += raw["pgactivate"]
-	stat.pgdeactivate += raw["pgdeactivate"]
-	stat.pglazyfree += raw["pglazyfree"]
-	stat.pglazyfreed += raw["pglazyfreed"]
-	stat.workingset_refault += raw["workingset_refault"]
-	stat.workingset_activate += raw["workingset_activate"]
-	stat.workingset_nodereclaim += raw["workingset_nodereclaim"]
+	stat.Anon += raw["anon"]
+	stat.File += raw["file"]
+	stat.KernelStack += raw["kernel_stack"]
+	stat.Slab += raw["slab"]
+	stat.Sock += raw["sock"]
+	stat.Shmem += raw["shmem"]
+	stat.FileMapped += raw["file_mapped"]
+	stat.FileDirty += raw["file_dirty"]
+	stat.FileWriteback += raw["file_writeback"]
+	stat.InactiveAnon += raw["inactive_anon"]
+	stat.ActiveAnon += raw["active_anon"]
+	stat.InactiveFile += raw["inactive_file"]
+	stat.ActiveFile += raw["active_file"]
+	stat.Unevictable += raw["unevictable"]
+	stat.SlabReclaimable += raw["slab_reclaimable"]
+	stat.SlabUnreclaimable += raw["slab_unreclaimable"]
+	stat.Pgfault += raw["pgfault"]
+	stat.Pgmajfault += raw["pgmajfault"]
+	stat.Pgrefill += raw["pgrefill"]
+	stat.Pgscan += raw["pgscan"]
+	stat.Pgsteal += raw["pgsteal"]
+	stat.Pgactivate += raw["pgactivate"]
+	stat.Pgdeactivate += raw["pgdeactivate"]
+	stat.Pglazyfree += raw["pglazyfree"]
+	stat.Pglazyfreed += raw["pglazyfreed"]
+	stat.WorkingsetRefault += raw["workingset_refault"]
+	stat.WorkingsetActivate += raw["workingset_activate"]
+	stat.WorkingsetNodereclaim += raw["workingset_nodereclaim"]
 
 	return nil
 }
