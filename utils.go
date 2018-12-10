@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -48,4 +49,13 @@ func cgServices() (items []string) {
 	}
 
 	return
+}
+
+func hasController(c string) bool {
+	file, err := ioutil.ReadFile(filepath.Join(cgDir, "cgroup.subtree_control"))
+	if err != nil {
+		log.Fatalln("Can't check availability cgroups controllers")
+	}
+
+	return strings.Contains(string(file), c)
 }
