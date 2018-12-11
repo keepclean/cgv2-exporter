@@ -37,6 +37,11 @@ func init() {
 	prometheus.MustRegister(memoryWorkingsetRefault)
 	prometheus.MustRegister(memoryWorkingsetActivate)
 	prometheus.MustRegister(memoryWorkingsetNodereclaim)
+	prometheus.MustRegister(memoryCurrent)
+	prometheus.MustRegister(memoryHigh)
+	prometheus.MustRegister(memoryLow)
+	prometheus.MustRegister(memoryMax)
+	prometheus.MustRegister(memoryMin)
 
 	// Register cpu metrics with prometheus
 	prometheus.MustRegister(cpuUsage)
@@ -61,6 +66,9 @@ func cgroupsMetrics() {
 				if hasMemory {
 					stat := &memoryStat{}
 					if err := parseMemoryStat(item, stat); err != nil {
+						log.Fatalln(err)
+					}
+					if err := parseMemoryFiles(item, stat); err != nil {
 						log.Fatalln(err)
 					}
 					memStats[item] = *stat
@@ -105,6 +113,11 @@ func cgroupsMetrics() {
 					memoryWorkingsetRefault.WithLabelValues(item).Set(float64(memStats[item].WorkingsetRefault))
 					memoryWorkingsetActivate.WithLabelValues(item).Set(float64(memStats[item].WorkingsetActivate))
 					memoryWorkingsetNodereclaim.WithLabelValues(item).Set(float64(memStats[item].WorkingsetNodereclaim))
+					memoryCurrent.WithLabelValues(item).Set(float64(memStats[item].Current))
+					memoryHigh.WithLabelValues(item).Set(float64(memStats[item].High))
+					memoryLow.WithLabelValues(item).Set(float64(memStats[item].Low))
+					memoryMax.WithLabelValues(item).Set(float64(memStats[item].Max))
+					memoryMin.WithLabelValues(item).Set(float64(memStats[item].Min))
 				}
 
 				if hasCPU {

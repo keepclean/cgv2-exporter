@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"golang.org/x/sys/unix"
 )
 
 func parseKV(s string) (string, uint64, error) {
@@ -54,8 +56,14 @@ func cgServices() (items []string) {
 func hasController(c string) bool {
 	file, err := ioutil.ReadFile(filepath.Join(cgDir, "cgroup.subtree_control"))
 	if err != nil {
-		log.Fatalln("Can't check availability cgroups controllers")
+		log.Fatalf("Can't check availability cgroups controllers: %v", err)
 	}
 
 	return strings.Contains(string(file), c)
+}
+
+func totalRAMMemory() uint64 {
+	info := &unix.Sysinfo_t{}
+	unix.Sysinfo(info)
+	return info.Totalram
 }

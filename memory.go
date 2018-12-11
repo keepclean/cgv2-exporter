@@ -2,8 +2,11 @@ package main
 
 import (
 	"bufio"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -37,6 +40,11 @@ type memoryStat struct {
 	WorkingsetRefault     uint64
 	WorkingsetActivate    uint64
 	WorkingsetNodereclaim uint64
+	Current               uint64
+	High                  uint64
+	Low                   uint64
+	Max                   uint64
+	Min                   uint64
 }
 
 var (
@@ -236,6 +244,41 @@ var (
 		},
 		[]string{"service"},
 	)
+	memoryCurrent = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_current_bytes",
+			Help: "The total amount of memory currently being used by the cgroup and its descendants.",
+		},
+		[]string{"service"},
+	)
+	memoryHigh = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_high_bytes",
+			Help: "Memory usage throttle limit.",
+		},
+		[]string{"service"},
+	)
+	memoryLow = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_low_bytes",
+			Help: "Best-effort memory protection.",
+		},
+		[]string{"service"},
+	)
+	memoryMax = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_max_bytes",
+			Help: "Memory usage hard limit.",
+		},
+		[]string{"service"},
+	)
+	memoryMin = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_min_bytes",
+			Help: "Hard memory protection.",
+		},
+		[]string{"service"},
+	)
 )
 
 func parseMemoryStat(item string, stat *memoryStat) error {
@@ -288,6 +331,46 @@ func parseMemoryStat(item string, stat *memoryStat) error {
 	stat.WorkingsetRefault = raw["workingset_refault"]
 	stat.WorkingsetActivate = raw["workingset_activate"]
 	stat.WorkingsetNodereclaim = raw["workingset_nodereclaim"]
+
+	return nil
+}
+
+var memoryFiles = []string{
+	"memory.current",
+	"memory.high",
+	"memory.low",
+	"memory.max",
+	"memory.min",
+}
+
+var totalRAM = totalRAMMemory()
+
+func parseMemoryFiles(item string, stat *memoryStat) error {
+	raw := make(map[string]uint64)
+
+	for _, f := range memoryFiles {
+		file, err := ioutil.ReadFile(filepath.Join(cgDir, item, f))
+		if err != nil {
+			return err
+		}
+
+		if strings.Contains(string(file), "max") {
+			raw[f] = totalRAM
+			continue
+		}
+
+		v, err := strconv.ParseUint(strings.TrimSuffix(string(file), "\n"), 10, 64)
+		if err != nil {
+			v = 0
+		}
+		raw[f] = v
+	}
+
+	stat.Current = raw["memory.current"]
+	stat.High = raw["memory.high"]
+	stat.Low = raw["memory.low"]
+	stat.Max = raw["memory.max"]
+	stat.Min = raw["memory.min"]
 
 	return nil
 }
