@@ -68,9 +68,8 @@ func cgroupsMetrics() {
 					if err := parseMemoryStat(item, stat); err != nil {
 						log.Fatalln(err)
 					}
-					if err := parseMemoryFiles(item, stat); err != nil {
-						log.Fatalln(err)
-					}
+					parseMemoryFiles(item, stat)
+
 					memStats[item] = *stat
 				}
 

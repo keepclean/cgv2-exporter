@@ -3,10 +3,12 @@ package main
 import (
 	"bufio"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -335,23 +337,31 @@ func parseMemoryStat(item string, stat *memoryStat) error {
 	return nil
 }
 
-var memoryFiles = []string{
-	"memory.current",
-	"memory.high",
-	"memory.low",
-	"memory.max",
-	"memory.min",
+var memoryFiles = map[string]bool{
+	"memory.current": true,
+	"memory.high":    true,
+	"memory.low":     true,
+	"memory.max":     true,
+	"memory.min":     true,
 }
 
 var totalRAM = totalRAMMemory()
 
-func parseMemoryFiles(item string, stat *memoryStat) error {
+func parseMemoryFiles(item string, stat *memoryStat) {
 	raw := make(map[string]uint64)
 
-	for _, f := range memoryFiles {
+	for f, v := range memoryFiles {
+		// Linux kernels don't have all memory cgroup files
+		// e.g. memory.min was released in 4.18
+		//
+		// a wierd way do not iterate over inexistent files
+		if !v {
+			continue
+		}
 		file, err := ioutil.ReadFile(filepath.Join(cgDir, item, f))
-		if err != nil {
-			return err
+		if e, ok := err.(*os.PathError); err != nil && ok && e.Err == syscall.ENOENT {
+			memoryFiles[f] = false
+			log.Printf("%v. Disabling collecting metrics from %s files for all cgroups", err, f)
 		}
 
 		if strings.Contains(string(file), "max") {
@@ -371,6 +381,4 @@ func parseMemoryFiles(item string, stat *memoryStat) error {
 	stat.Low = raw["memory.low"]
 	stat.Max = raw["memory.max"]
 	stat.Min = raw["memory.min"]
-
-	return nil
 }
