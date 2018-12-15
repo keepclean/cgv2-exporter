@@ -27,7 +27,7 @@ func parseKV(s string) (string, uint64, error) {
 
 }
 
-func close(c io.Closer) {
+func closeFile(c io.Closer) {
 	err := c.Close()
 	if err != nil {
 		log.Fatal(err)

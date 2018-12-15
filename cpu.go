@@ -68,7 +68,7 @@ func parseCPUStat(item string, stat *cpuStat) error {
 	if err != nil {
 		return err
 	}
-	defer close(file)
+	defer closeFile(file)
 
 	raw := make(map[string]float64)
 

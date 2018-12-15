@@ -288,7 +288,7 @@ func parseMemoryStat(item string, stat *memoryStat) error {
 	if err != nil {
 		return err
 	}
-	defer close(file)
+	defer closeFile(file)
 
 	raw := make(map[string]uint64)
 
