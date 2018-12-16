@@ -34,7 +34,7 @@ func main() {
 		close(idleConnsClosed)
 	}()
 
-	cgroupsMetrics()
+	go cgroupMetics(hasController("memory"), hasController("cpu"))
 
 	http.Handle("/metrics", promhttp.Handler())
 
