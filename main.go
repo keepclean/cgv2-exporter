@@ -24,8 +24,7 @@ func main() {
 	idleConnsClosed := make(chan struct{})
 	go func() {
 		ch := make(chan os.Signal, 1)
-		signal.Notify(ch, os.Interrupt)
-		signal.Notify(ch, syscall.SIGTERM)
+		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 		<-ch
 
 		srv.SetKeepAlivesEnabled(false)

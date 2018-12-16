@@ -53,79 +53,68 @@ func init() {
 }
 
 func cgroupsMetrics() {
-	hasMemory := hasController("memory")
-	hasCPU := hasController("cpu")
+	hasMemoryController := hasController("memory")
+	hasCPUController := hasController("cpu")
 
 	go func() {
 		for {
 			cgItems := cgServices()
-			memStats := make(map[string]memoryStat)
-			cpuStats := make(map[string]cpuStat)
 
 			for _, item := range cgItems {
-				if hasMemory {
+				if hasMemoryController {
 					stat := &memoryStat{}
 					if err := parseMemoryStat(item, stat); err != nil {
-						log.Fatalln(err)
+						log.Println(err)
 					}
 					parseMemoryFiles(item, stat)
 
-					memStats[item] = *stat
+					memoryAnon.WithLabelValues(item).Set(float64(stat.Anon))
+					memoryFile.WithLabelValues(item).Set(float64(stat.File))
+					memoryKernelStack.WithLabelValues(item).Set(float64(stat.KernelStack))
+					memorySlab.WithLabelValues(item).Set(float64(stat.Slab))
+					memorySock.WithLabelValues(item).Set(float64(stat.Sock))
+					memoryShmem.WithLabelValues(item).Set(float64(stat.Shmem))
+					memoryFileMapped.WithLabelValues(item).Set(float64(stat.FileMapped))
+					memoryFileDirty.WithLabelValues(item).Set(float64(stat.FileDirty))
+					memoryFileWriteback.WithLabelValues(item).Set(float64(stat.FileWriteback))
+					memoryInactiveAnon.WithLabelValues(item).Set(float64(stat.InactiveAnon))
+					memoryActiveAnon.WithLabelValues(item).Set(float64(stat.ActiveAnon))
+					memoryInactiveFile.WithLabelValues(item).Set(float64(stat.InactiveFile))
+					memoryActiveFile.WithLabelValues(item).Set(float64(stat.ActiveFile))
+					memoryUnevictable.WithLabelValues(item).Set(float64(stat.Unevictable))
+					memorySlabReclaimable.WithLabelValues(item).Set(float64(stat.SlabReclaimable))
+					memorySlabUnreclaimable.WithLabelValues(item).Set(float64(stat.SlabUnreclaimable))
+					memoryPgfault.WithLabelValues(item).Set(float64(stat.Pgfault))
+					memoryPgmajfault.WithLabelValues(item).Set(float64(stat.Pgmajfault))
+					memoryPgrefill.WithLabelValues(item).Set(float64(stat.Pgrefill))
+					memoryPgscan.WithLabelValues(item).Set(float64(stat.Pgscan))
+					memoryPgsteal.WithLabelValues(item).Set(float64(stat.Pgsteal))
+					memoryPgactivate.WithLabelValues(item).Set(float64(stat.Pgactivate))
+					memoryPgdeactivate.WithLabelValues(item).Set(float64(stat.Pgdeactivate))
+					memoryPglazyfree.WithLabelValues(item).Set(float64(stat.Pglazyfree))
+					memoryPglazyfreed.WithLabelValues(item).Set(float64(stat.Pglazyfreed))
+					memoryWorkingsetRefault.WithLabelValues(item).Set(float64(stat.WorkingsetRefault))
+					memoryWorkingsetActivate.WithLabelValues(item).Set(float64(stat.WorkingsetActivate))
+					memoryWorkingsetNodereclaim.WithLabelValues(item).Set(float64(stat.WorkingsetNodereclaim))
+					memoryCurrent.WithLabelValues(item).Set(float64(stat.Current))
+					memoryHigh.WithLabelValues(item).Set(float64(stat.High))
+					memoryLow.WithLabelValues(item).Set(float64(stat.Low))
+					memoryMax.WithLabelValues(item).Set(float64(stat.Max))
+					memoryMin.WithLabelValues(item).Set(float64(stat.Min))
 				}
 
-				if hasCPU {
+				if hasCPUController {
 					stat := &cpuStat{}
 					if err := parseCPUStat(item, stat); err != nil {
-						log.Fatalln(err)
+						log.Println(err)
 					}
-					cpuStats[item] = *stat
-				}
-			}
 
-			for _, item := range cgItems {
-				if hasMemory {
-					memoryAnon.WithLabelValues(item).Set(float64(memStats[item].Anon))
-					memoryFile.WithLabelValues(item).Set(float64(memStats[item].File))
-					memoryKernelStack.WithLabelValues(item).Set(float64(memStats[item].KernelStack))
-					memorySlab.WithLabelValues(item).Set(float64(memStats[item].Slab))
-					memorySock.WithLabelValues(item).Set(float64(memStats[item].Sock))
-					memoryShmem.WithLabelValues(item).Set(float64(memStats[item].Shmem))
-					memoryFileMapped.WithLabelValues(item).Set(float64(memStats[item].FileMapped))
-					memoryFileDirty.WithLabelValues(item).Set(float64(memStats[item].FileDirty))
-					memoryFileWriteback.WithLabelValues(item).Set(float64(memStats[item].FileWriteback))
-					memoryInactiveAnon.WithLabelValues(item).Set(float64(memStats[item].InactiveAnon))
-					memoryActiveAnon.WithLabelValues(item).Set(float64(memStats[item].ActiveAnon))
-					memoryInactiveFile.WithLabelValues(item).Set(float64(memStats[item].InactiveFile))
-					memoryActiveFile.WithLabelValues(item).Set(float64(memStats[item].ActiveFile))
-					memoryUnevictable.WithLabelValues(item).Set(float64(memStats[item].Unevictable))
-					memorySlabReclaimable.WithLabelValues(item).Set(float64(memStats[item].SlabReclaimable))
-					memorySlabUnreclaimable.WithLabelValues(item).Set(float64(memStats[item].SlabUnreclaimable))
-					memoryPgfault.WithLabelValues(item).Set(float64(memStats[item].Pgfault))
-					memoryPgmajfault.WithLabelValues(item).Set(float64(memStats[item].Pgmajfault))
-					memoryPgrefill.WithLabelValues(item).Set(float64(memStats[item].Pgrefill))
-					memoryPgscan.WithLabelValues(item).Set(float64(memStats[item].Pgscan))
-					memoryPgsteal.WithLabelValues(item).Set(float64(memStats[item].Pgsteal))
-					memoryPgactivate.WithLabelValues(item).Set(float64(memStats[item].Pgactivate))
-					memoryPgdeactivate.WithLabelValues(item).Set(float64(memStats[item].Pgdeactivate))
-					memoryPglazyfree.WithLabelValues(item).Set(float64(memStats[item].Pglazyfree))
-					memoryPglazyfreed.WithLabelValues(item).Set(float64(memStats[item].Pglazyfreed))
-					memoryWorkingsetRefault.WithLabelValues(item).Set(float64(memStats[item].WorkingsetRefault))
-					memoryWorkingsetActivate.WithLabelValues(item).Set(float64(memStats[item].WorkingsetActivate))
-					memoryWorkingsetNodereclaim.WithLabelValues(item).Set(float64(memStats[item].WorkingsetNodereclaim))
-					memoryCurrent.WithLabelValues(item).Set(float64(memStats[item].Current))
-					memoryHigh.WithLabelValues(item).Set(float64(memStats[item].High))
-					memoryLow.WithLabelValues(item).Set(float64(memStats[item].Low))
-					memoryMax.WithLabelValues(item).Set(float64(memStats[item].Max))
-					memoryMin.WithLabelValues(item).Set(float64(memStats[item].Min))
-				}
-
-				if hasCPU {
-					cpuUsage.WithLabelValues(item).Set(cpuStats[item].Usage)
-					cpuUser.WithLabelValues(item).Set(cpuStats[item].User)
-					cpuSystem.WithLabelValues(item).Set(cpuStats[item].System)
-					cpuNrPeriods.WithLabelValues(item).Set(cpuStats[item].NrPeriods)
-					cpuNrThrottled.WithLabelValues(item).Set(cpuStats[item].NrThrottled)
-					cpuThrottled.WithLabelValues(item).Set(cpuStats[item].Throttled)
+					cpuUsage.WithLabelValues(item).Set(stat.Usage)
+					cpuUser.WithLabelValues(item).Set(stat.User)
+					cpuSystem.WithLabelValues(item).Set(stat.System)
+					cpuNrPeriods.WithLabelValues(item).Set(stat.NrPeriods)
+					cpuNrThrottled.WithLabelValues(item).Set(stat.NrThrottled)
+					cpuThrottled.WithLabelValues(item).Set(stat.Throttled)
 				}
 			}
 
