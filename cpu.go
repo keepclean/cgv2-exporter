@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -62,6 +63,20 @@ var (
 		[]string{"service"},
 	)
 )
+
+func cgroupCPUMetics(item string) {
+	stat := &cpuStat{}
+	if err := parseCPUStat(item, stat); err != nil {
+		log.Println(err)
+	}
+
+	cpuUsage.WithLabelValues(item).Set(stat.Usage)
+	cpuUser.WithLabelValues(item).Set(stat.User)
+	cpuSystem.WithLabelValues(item).Set(stat.System)
+	cpuNrPeriods.WithLabelValues(item).Set(stat.NrPeriods)
+	cpuNrThrottled.WithLabelValues(item).Set(stat.NrThrottled)
+	cpuThrottled.WithLabelValues(item).Set(stat.Throttled)
+}
 
 func parseCPUStat(item string, stat *cpuStat) error {
 	file, err := os.Open(filepath.Join(cgDir, item, "cpu.stat"))
