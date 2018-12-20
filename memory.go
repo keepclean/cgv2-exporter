@@ -354,14 +354,14 @@ func parseMemoryFiles(item string, stat *memoryStat) {
 		// Linux kernels don't have all memory cgroup files
 		// e.g. memory.min was released in 4.18
 		//
-		// a wierd way do not iterate over inexistent files
-		if !v {
-			continue
-		}
+		// a wierd way to avoid duplicates in log file
 		file, err := ioutil.ReadFile(filepath.Join(cgDir, item, f))
 		if e, ok := err.(*os.PathError); err != nil && ok && e.Err == syscall.ENOENT {
+			if !v {
+				continue
+			}
 			memoryFiles[f] = false
-			log.Printf("%v. Disabling collecting metrics from %s files for all cgroups", err, f)
+			log.Println(err)
 		}
 
 		if strings.Contains(string(file), "max") {
