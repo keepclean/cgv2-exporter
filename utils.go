@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -66,4 +67,24 @@ func totalRAMMemory() uint64 {
 	info := &unix.Sysinfo_t{}
 	unix.Sysinfo(info)
 	return info.Totalram
+}
+
+func controllerFiles(controller, item string) ([]string, error) {
+	entries, err := ioutil.ReadDir(filepath.Join(cgDir, item))
+	if err != nil {
+		return nil, err
+	}
+
+	var files []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		if !strings.HasPrefix(entry.Name(), fmt.Sprint(controller, ".")) {
+			continue
+		}
+		files = append(files, entry.Name())
+	}
+
+	return files, nil
 }

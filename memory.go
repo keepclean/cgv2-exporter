@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -379,31 +378,26 @@ func parseMemoryStat(item string, stat *memoryStat) error {
 	return nil
 }
 
-var memoryFiles = map[string]bool{
-	"memory.current": true,
-	"memory.high":    true,
-	"memory.low":     true,
-	"memory.max":     true,
-	"memory.min":     true,
-}
-
 var totalRAM = totalRAMMemory()
 
 func parseMemoryFiles(item string, stat *memoryStat) {
-	raw := make(map[string]uint64)
+	memoryFiles, err := controllerFiles("memory", item)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
-	for f, v := range memoryFiles {
-		// Linux kernels don't have all memory cgroup files
-		// e.g. memory.min was released in 4.18
-		//
-		// a wierd way to avoid duplicates in log file
+	raw := make(map[string]uint64)
+	for _, f := range memoryFiles {
+		// memory.stat file is parsed in parseMemoryStat func
+		if f == "memory.stat" || f == "memory.events" {
+			continue
+		}
+
 		file, err := ioutil.ReadFile(filepath.Join(cgDir, item, f))
-		if e, ok := err.(*os.PathError); err != nil && ok && e.Err == syscall.ENOENT {
-			if !v {
-				continue
-			}
-			memoryFiles[f] = false
+		if err != nil {
 			log.Println(err)
+			continue
 		}
 
 		if strings.Contains(string(file), "max") {
