@@ -280,9 +280,95 @@ var (
 		},
 		[]string{"service"},
 	)
+
+	// cadvisor style memory metrics for the backward compability
+	memoryCache = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_cache",
+			Help: "Number of bytes of page cache memory.",
+		},
+		[]string{"app_name"},
+	)
+	memoryFailCnt = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_failcnt",
+			Help: "Number of memory usage hits limits.",
+		},
+		[]string{"app_name"},
+	)
+	memoryMaxUsage = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_max_usage_bytes",
+			Help: "Maximum memory usage recorded in bytes.",
+		},
+		[]string{"app_name"},
+	)
+	memoryUsage = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_usage_bytes",
+			Help: "Current memory usage in bytes, including all memory regardless of when it was accessed.",
+		},
+		[]string{"app_name"},
+	)
+	memoryRss = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_rss",
+			Help: "Size of RSS in bytes.",
+		},
+		[]string{"app_name"},
+	)
+	memorySwap = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_swap",
+			Help: "Container swap usage in bytes.",
+		},
+		[]string{"app_name"},
+	)
+	memoryWorkingSet = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_working_set_bytes",
+			Help: "Current working set in bytes.",
+		},
+		[]string{"app_name"},
+	)
+	memorySpecLimit = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_spec_memory_limit_bytes",
+			Help: "Memory limit for the container.",
+		},
+		[]string{"app_name"},
+	)
+	memorySpecReservationLimit = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_spec_memory_reservation_limit_bytes",
+			Help: "Memory reservation limit for the container.",
+		},
+		[]string{"app_name"},
+	)
+	memorySpecSwapLimit = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_spec_memory_swap_limit_bytes",
+			Help: "Memory swap limit for the container.",
+		},
+		[]string{"app_name"},
+	)
+	memoryCadvisorPgfault = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_failures_total",
+			Help: "Cumulative count of memory allocation failures.",
+		},
+		[]string{"app_name", "scope", "type"},
+	)
+	memoryCadvisorPgmajfault = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_failures_total",
+			Help: "Cumulative count of memory allocation failures.",
+		},
+		[]string{"app_name", "scope", "type"},
+	)
 )
 
-func cgroupMemoryMetrics(item string) {
+func cgroupMemoryMetrics(item string, cadvisorMemoryMetrics bool) {
 	stat := &memoryStat{}
 	if err := parseMemoryStat(item, stat); err != nil {
 		log.Println(err)
@@ -322,6 +408,27 @@ func cgroupMemoryMetrics(item string) {
 	memoryLow.WithLabelValues(item).Set(float64(stat.Low))
 	memoryMax.WithLabelValues(item).Set(float64(stat.Max))
 	memoryMin.WithLabelValues(item).Set(float64(stat.Min))
+
+	if cadvisorMemoryMetrics {
+		memoryCache.WithLabelValues(item).Set(float64(0))
+		memoryFailCnt.WithLabelValues(item).Set(float64(0))
+		memoryMaxUsage.WithLabelValues(item).Set(float64(0))
+		memoryUsage.WithLabelValues(item).Set(float64(stat.Current))
+		memoryRss.WithLabelValues(item).Set(float64(0))
+		memorySwap.WithLabelValues(item).Set(float64(0))
+
+		var workingSet uint64
+		if !(stat.Current < stat.InactiveFile) {
+			workingSet = stat.Current - stat.InactiveFile
+		}
+		memoryWorkingSet.WithLabelValues(item).Set(float64(workingSet))
+
+		memorySpecLimit.WithLabelValues(item).Set(float64(stat.Max))
+		memorySpecReservationLimit.WithLabelValues(item).Set(float64(0))
+		memorySpecSwapLimit.WithLabelValues(item).Set(float64(0))
+		memoryCadvisorPgfault.WithLabelValues(item, "container", "pgfault").Set(float64(stat.Pgfault))
+		memoryCadvisorPgmajfault.WithLabelValues(item, "container", "pgmajfault").Set(float64(stat.Pgmajfault))
+	}
 }
 
 func parseMemoryStat(item string, stat *memoryStat) error {
@@ -384,7 +491,6 @@ func parseMemoryFiles(item string, stat *memoryStat) {
 	memoryFiles, err := controllerFiles("memory", item)
 	if err != nil {
 		log.Println(err)
-		return
 	}
 
 	raw := make(map[string]uint64)
@@ -405,7 +511,7 @@ func parseMemoryFiles(item string, stat *memoryStat) {
 			continue
 		}
 
-		v, err := strconv.ParseUint(strings.TrimSuffix(string(file), "\n"), 10, 64)
+		v, err := strconv.ParseUint(strings.TrimSpace(string(file)), 10, 64)
 		if err != nil {
 			v = 0
 		}

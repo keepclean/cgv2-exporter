@@ -72,7 +72,7 @@ func totalRAMMemory() uint64 {
 func controllerFiles(controller, item string) ([]string, error) {
 	entries, err := ioutil.ReadDir(filepath.Join(cgDir, item))
 	if err != nil {
-		return nil, err
+		return []string{}, err
 	}
 
 	var files []string

@@ -42,6 +42,20 @@ func init() {
 	prometheus.MustRegister(memoryMax)
 	prometheus.MustRegister(memoryMin)
 
+	// cadvisor style memory metrics for the backward compability
+	prometheus.Register(memoryCache)
+	prometheus.Register(memoryFailCnt)
+	prometheus.Register(memoryMaxUsage)
+	prometheus.Register(memoryUsage) // done
+	prometheus.Register(memoryRss)
+	prometheus.Register(memorySwap)
+	prometheus.Register(memoryWorkingSet)           // done
+	prometheus.Register(memorySpecLimit)            // done
+	prometheus.Register(memorySpecReservationLimit) // unified cgroup doesnt't have anything related
+	prometheus.Register(memorySpecSwapLimit)        // unified cgroup doesnt't have anything related
+	prometheus.Register(memoryCadvisorPgfault)      // done
+	prometheus.Register(memoryCadvisorPgmajfault)   // done
+
 	// Register cpu metrics with prometheus
 	prometheus.MustRegister(cpuUsage)
 	prometheus.MustRegister(cpuUser)
@@ -51,13 +65,13 @@ func init() {
 	prometheus.MustRegister(cpuThrottled)
 }
 
-func cgroupMetrics(hasMemoryController bool, hasCPUController bool) {
+func cgroupMetrics(hasMemoryController bool, hasCPUController bool, cadvisorMemoryMetrics bool) {
 	for {
 		cgItems := cgServices()
 
 		for _, item := range cgItems {
 			if hasMemoryController {
-				go cgroupMemoryMetrics(item)
+				go cgroupMemoryMetrics(item, cadvisorMemoryMetrics)
 			}
 
 			if hasCPUController {

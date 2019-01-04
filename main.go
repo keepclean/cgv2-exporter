@@ -18,6 +18,7 @@ const cgDir string = "/sys/fs/cgroup/system.slice/"
 func main() {
 	var argIP = flag.String("listen_ip", "", "IP to listen on, defaults to all IPs")
 	var argPort = flag.Int("port", 8888, "port to listen")
+	var cadvisorMemoryMetrics = flag.Bool("cadvisor_memory_metrics", false, "Add to exported metrics cadvisor style memory metrics")
 	flag.Parse()
 
 	var srv http.Server
@@ -34,7 +35,7 @@ func main() {
 		close(idleConnsClosed)
 	}()
 
-	go cgroupMetrics(hasController("memory"), hasController("cpu"))
+	go cgroupMetrics(hasController("memory"), hasController("cpu"), *cadvisorMemoryMetrics)
 
 	http.Handle("/metrics", promhttp.Handler())
 
