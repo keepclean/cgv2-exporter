@@ -51,17 +51,17 @@ func init() {
 	prometheus.MustRegister(cpuThrottled)
 }
 
-func cgroupMetics(hasMemoryController bool, hasCPUController bool) {
+func cgroupMetrics(hasMemoryController bool, hasCPUController bool) {
 	for {
 		cgItems := cgServices()
 
 		for _, item := range cgItems {
 			if hasMemoryController {
-				go cgroupMemoryMetics(item)
+				go cgroupMemoryMetrics(item)
 			}
 
 			if hasCPUController {
-				go cgroupCPUMetics(item)
+				go cgroupCPUMetrics(item)
 			}
 		}
 

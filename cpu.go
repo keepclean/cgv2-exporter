@@ -64,7 +64,7 @@ var (
 	)
 )
 
-func cgroupCPUMetics(item string) {
+func cgroupCPUMetrics(item string) {
 	stat := &cpuStat{}
 	if err := parseCPUStat(item, stat); err != nil {
 		log.Println(err)

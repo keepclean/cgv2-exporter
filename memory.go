@@ -282,7 +282,7 @@ var (
 	)
 )
 
-func cgroupMemoryMetics(item string) {
+func cgroupMemoryMetrics(item string) {
 	stat := &memoryStat{}
 	if err := parseMemoryStat(item, stat); err != nil {
 		log.Println(err)
