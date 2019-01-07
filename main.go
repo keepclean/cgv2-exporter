@@ -15,12 +15,20 @@ import (
 
 const cgDir string = "/sys/fs/cgroup/system.slice/"
 
-func main() {
-	var argIP = flag.String("listen_ip", "", "IP to listen on, defaults to all IPs")
-	var argPort = flag.Int("port", 8888, "port to listen")
-	var cadvisorMetrics = flag.Bool("cadvisor_metrics", false, "Add to exported metrics cadvisor style metrics")
-	flag.Parse()
+var (
+	argIP           string
+	argPort         int
+	cadvisorMetrics bool
+)
 
+func init() {
+	flag.StringVar(&argIP, "listen_ip", "", "IP to listen on, defaults to all IPs")
+	flag.IntVar(&argPort, "port", 8888, "port to listen")
+	flag.BoolVar(&cadvisorMetrics, "cadvisor_metrics", false, "Add to exported metrics cadvisor style metrics")
+	flag.Parse()
+}
+
+func main() {
 	var srv http.Server
 	idleConnsClosed := make(chan struct{})
 	go func() {
@@ -35,11 +43,11 @@ func main() {
 		close(idleConnsClosed)
 	}()
 
-	go cgroupMetrics(hasController("memory"), hasController("cpu"), hasController("io"), *cadvisorMetrics)
+	go cgroupMetrics(hasController("memory"), hasController("cpu"), hasController("io"), cadvisorMetrics)
 
 	http.Handle("/metrics", promhttp.Handler())
 
-	srv.Addr = fmt.Sprintf("%s:%d", *argIP, *argPort)
+	srv.Addr = fmt.Sprintf("%s:%d", argIP, argPort)
 	log.Println("Starting web server on: ", srv.Addr)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Println("ListenAndServe:", err)
