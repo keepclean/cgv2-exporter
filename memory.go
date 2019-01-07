@@ -352,14 +352,7 @@ var (
 		},
 		[]string{"app_name"},
 	)
-	memoryCadvisorPgfault = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "container_memory_failures_total",
-			Help: "Cumulative count of memory allocation failures.",
-		},
-		[]string{"app_name", "scope", "type"},
-	)
-	memoryCadvisorPgmajfault = prometheus.NewGaugeVec(
+	memoryCadvisorPgfaults = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "container_memory_failures_total",
 			Help: "Cumulative count of memory allocation failures.",
@@ -426,8 +419,8 @@ func cgroupMemoryMetrics(item string, cadvisorMemoryMetrics bool) {
 		memorySpecLimit.WithLabelValues(item).Set(float64(stat.Max))
 		memorySpecReservationLimit.WithLabelValues(item).Set(float64(0))
 		memorySpecSwapLimit.WithLabelValues(item).Set(float64(0))
-		memoryCadvisorPgfault.WithLabelValues(item, "container", "pgfault").Set(float64(stat.Pgfault))
-		memoryCadvisorPgmajfault.WithLabelValues(item, "container", "pgmajfault").Set(float64(stat.Pgmajfault))
+		memoryCadvisorPgfaults.WithLabelValues(item, "container", "pgfault").Set(float64(stat.Pgfault))
+		memoryCadvisorPgfaults.WithLabelValues(item, "container", "pgmajfault").Set(float64(stat.Pgmajfault))
 	}
 }
 

@@ -53,8 +53,7 @@ func init() {
 	prometheus.Register(memorySpecLimit)            // done
 	prometheus.Register(memorySpecReservationLimit) // unified cgroup doesnt't have anything related
 	prometheus.Register(memorySpecSwapLimit)        // unified cgroup doesnt't have anything related
-	prometheus.Register(memoryCadvisorPgfault)      // done
-	prometheus.Register(memoryCadvisorPgmajfault)   // done
+	prometheus.Register(memoryCadvisorPgfaults)     // done; for both pgmajfault and pgfault
 
 	// Register cpu metrics with prometheus
 	prometheus.MustRegister(cpuUsage)
