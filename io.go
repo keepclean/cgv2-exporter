@@ -97,9 +97,9 @@ func cgroupIOMetrics(item string, cadvisorMetrics bool) {
 		if cadvisorMetrics {
 			d = fmt.Sprint("/dev/", d)
 			ioCadvisorRbytes.WithLabelValues(item, d).Set(s["rbytes"])
-			ioCadvisorRbytes.WithLabelValues(item, d).Set(s["wbytes"])
-			ioCadvisorRbytes.WithLabelValues(item, d).Set(s["rios"])
-			ioCadvisorRbytes.WithLabelValues(item, d).Set(s["wios"])
+			ioCadvisorWbytes.WithLabelValues(item, d).Set(s["wbytes"])
+			ioCadvisorRios.WithLabelValues(item, d).Set(s["rios"])
+			ioCadvisorWios.WithLabelValues(item, d).Set(s["wios"])
 		}
 	}
 }
