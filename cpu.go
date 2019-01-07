@@ -86,7 +86,6 @@ func parseCPUStat(item string, stat *cpuStat) error {
 	defer closeFile(file)
 
 	raw := make(map[string]float64)
-
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		key, value, err := parseKV(scanner.Text())

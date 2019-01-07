@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -25,7 +26,6 @@ func parseKV(s string) (string, uint64, error) {
 	}
 
 	return fields[0], v, nil
-
 }
 
 func closeFile(c io.Closer) {
@@ -87,4 +87,32 @@ func controllerFiles(controller, item string) ([]string, error) {
 	}
 
 	return files, nil
+}
+
+var devices map[string]string
+
+func blockDevices() {
+	sysBlockDir := "/sys/block/"
+	entries, err := ioutil.ReadDir(sysBlockDir)
+	if err != nil {
+		log.Println(err)
+	}
+
+	devices = make(map[string]string)
+	for _, entry := range entries {
+		if entry.Mode()&os.ModeSymlink == 0 {
+			continue
+		}
+
+		file, err := ioutil.ReadFile(filepath.Join(sysBlockDir, entry.Name(), "dev"))
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		device := strings.TrimSpace(string(file))
+		devices[device] = entry.Name()
+	}
+
+	return
 }

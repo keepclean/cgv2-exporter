@@ -414,7 +414,7 @@ var (
 	)
 )
 
-func cgroupMemoryMetrics(item string, cadvisorMemoryMetrics bool) {
+func cgroupMemoryMetrics(item string, cadvisorMetrics bool) {
 	stat := &memoryStat{}
 	parseMemoryFiles(item, stat)
 
@@ -457,13 +457,13 @@ func cgroupMemoryMetrics(item string, cadvisorMemoryMetrics bool) {
 	memoryEventsOom.WithLabelValues(item).Set(float64(stat.EventsOom))
 	memoryEventsOomKill.WithLabelValues(item).Set(float64(stat.EventsOomKill))
 
-	if cadvisorMemoryMetrics {
+	if cadvisorMetrics {
 		memoryCache.WithLabelValues(item).Set(float64(stat.File))
 		memoryFailCnt.WithLabelValues(item).Set(float64(stat.EventsMax))
-		memoryMaxUsage.WithLabelValues(item).Set(float64(0))
+		memoryMaxUsage.WithLabelValues(item).Set(float64(0)) // TODO
 		memoryUsage.WithLabelValues(item).Set(float64(stat.Current))
 		memoryRss.WithLabelValues(item).Set(float64(stat.Anon))
-		memorySwap.WithLabelValues(item).Set(float64(0))
+		memorySwap.WithLabelValues(item).Set(float64(0)) // TODO
 
 		var workingSet uint64
 		if !(stat.Current < stat.InactiveFile) {
@@ -472,8 +472,8 @@ func cgroupMemoryMetrics(item string, cadvisorMemoryMetrics bool) {
 		memoryWorkingSet.WithLabelValues(item).Set(float64(workingSet))
 
 		memorySpecLimit.WithLabelValues(item).Set(float64(stat.Max))
-		memorySpecReservationLimit.WithLabelValues(item).Set(float64(0))
-		memorySpecSwapLimit.WithLabelValues(item).Set(float64(0))
+		memorySpecReservationLimit.WithLabelValues(item).Set(float64(0)) // TODO
+		memorySpecSwapLimit.WithLabelValues(item).Set(float64(0))        // TODO
 		memoryCadvisorPgfaults.WithLabelValues(item, "container", "pgfault").Set(float64(stat.Pgfault))
 		memoryCadvisorPgfaults.WithLabelValues(item, "container", "pgmajfault").Set(float64(stat.Pgmajfault))
 	}

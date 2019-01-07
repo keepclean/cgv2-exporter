@@ -67,19 +67,37 @@ func init() {
 	prometheus.MustRegister(cpuNrPeriods)
 	prometheus.MustRegister(cpuNrThrottled)
 	prometheus.MustRegister(cpuThrottled)
+
+	// Register IO metrics with prometheus
+	prometheus.MustRegister(ioRbytes)
+	prometheus.MustRegister(ioWbytes)
+	prometheus.MustRegister(ioRios)
+	prometheus.MustRegister(ioWios)
+
+	// Register IO metrics with prometheus
+	prometheus.MustRegister(ioCadvisorRbytes)
+	prometheus.MustRegister(ioCadvisorWbytes)
+	prometheus.MustRegister(ioCadvisorRios)
+	prometheus.MustRegister(ioCadvisorWios)
 }
 
-func cgroupMetrics(hasMemoryController bool, hasCPUController bool, cadvisorMemoryMetrics bool) {
+func cgroupMetrics(hasMemoryController, hasCPUController, hasIOController bool, cadvisorMetrics bool) {
+	blockDevices()
+
 	for {
 		cgItems := cgServices()
 
 		for _, item := range cgItems {
 			if hasMemoryController {
-				go cgroupMemoryMetrics(item, cadvisorMemoryMetrics)
+				go cgroupMemoryMetrics(item, cadvisorMetrics)
 			}
 
 			if hasCPUController {
 				go cgroupCPUMetrics(item)
+			}
+
+			if hasIOController {
+				go cgroupIOMetrics(item, cadvisorMetrics)
 			}
 		}
 
