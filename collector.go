@@ -41,19 +41,24 @@ func init() {
 	prometheus.MustRegister(memoryLow)
 	prometheus.MustRegister(memoryMax)
 	prometheus.MustRegister(memoryMin)
+	prometheus.MustRegister(memoryEventsLow)
+	prometheus.MustRegister(memoryEventsHigh)
+	prometheus.MustRegister(memoryEventsMax)
+	prometheus.MustRegister(memoryEventsOom)
+	prometheus.MustRegister(memoryEventsOomKill)
 
 	// cadvisor style memory metrics for the backward compability
-	prometheus.Register(memoryCache)
-	prometheus.Register(memoryFailCnt)
-	prometheus.Register(memoryMaxUsage)
-	prometheus.Register(memoryUsage) // done
-	prometheus.Register(memoryRss)
-	prometheus.Register(memorySwap)
+	prometheus.Register(memoryCache)                // done
+	prometheus.Register(memoryFailCnt)              // done
+	prometheus.Register(memoryMaxUsage)             // unified cgroup doesn'y have anything related to this out of the box
+	prometheus.Register(memoryUsage)                // done
+	prometheus.Register(memoryRss)                  // done
+	prometheus.Register(memorySwap)                 // TODO parse memory.swap.current file
 	prometheus.Register(memoryWorkingSet)           // done
 	prometheus.Register(memorySpecLimit)            // done
-	prometheus.Register(memorySpecReservationLimit) // unified cgroup doesnt't have anything related
-	prometheus.Register(memorySpecSwapLimit)        // unified cgroup doesnt't have anything related
-	prometheus.Register(memoryCadvisorPgfaults)     // done; for both pgmajfault and pgfault
+	prometheus.Register(memorySpecReservationLimit) // unified cgroup doesnt't have anything related to this
+	prometheus.Register(memorySpecSwapLimit)        // unified cgroup doesnt't have anything related to this
+	prometheus.Register(memoryCadvisorPgfaults)     // done for both pgmajfault and pgfault
 
 	// Register cpu metrics with prometheus
 	prometheus.MustRegister(cpuUsage)

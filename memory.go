@@ -46,9 +46,15 @@ type memoryStat struct {
 	Low                   uint64
 	Max                   uint64
 	Min                   uint64
+	EventsLow             uint64
+	EventsHigh            uint64
+	EventsMax             uint64
+	EventsOom             uint64
+	EventsOomKill         uint64
 }
 
 var (
+	// memory.stat file
 	memoryAnon = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "container_memory_anon_bytes",
@@ -245,6 +251,8 @@ var (
 		},
 		[]string{"service"},
 	)
+
+	// memory.current file
 	memoryCurrent = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "container_memory_current_bytes",
@@ -252,6 +260,8 @@ var (
 		},
 		[]string{"service"},
 	)
+
+	// memory.high file
 	memoryHigh = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "container_memory_high_bytes",
@@ -259,6 +269,8 @@ var (
 		},
 		[]string{"service"},
 	)
+
+	// memory.low file
 	memoryLow = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "container_memory_low_bytes",
@@ -266,6 +278,8 @@ var (
 		},
 		[]string{"service"},
 	)
+
+	// memory.max file
 	memoryMax = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "container_memory_max_bytes",
@@ -273,10 +287,49 @@ var (
 		},
 		[]string{"service"},
 	)
+
+	// memory.min file
 	memoryMin = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "container_memory_min_bytes",
 			Help: "Hard memory protection.",
+		},
+		[]string{"service"},
+	)
+
+	// memory.events file
+	memoryEventsLow = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_low_events",
+			Help: "The number of times the cgroup is reclaimed due to high memory pressure even though its usage is under the low boundary.",
+		},
+		[]string{"service"},
+	)
+	memoryEventsHigh = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_high_events",
+			Help: "The number of times processes of the cgroup are throttled and routed to perform direct memory reclaim because the high memory boundary was exceeded.",
+		},
+		[]string{"service"},
+	)
+	memoryEventsMax = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_max_events",
+			Help: "The number of times the cgroup's memory usage was about to go over the max boundary.",
+		},
+		[]string{"service"},
+	)
+	memoryEventsOom = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_oom_events",
+			Help: "The number of time the cgroup's memory usage was reached the limit and allocation was about to fail.",
+		},
+		[]string{"service"},
+	)
+	memoryEventsOomKill = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "container_memory_oom_kill_events",
+			Help: "The number of processes belonging to this cgroup killed by any kind of OOM killer.",
 		},
 		[]string{"service"},
 	)
@@ -363,9 +416,6 @@ var (
 
 func cgroupMemoryMetrics(item string, cadvisorMemoryMetrics bool) {
 	stat := &memoryStat{}
-	if err := parseMemoryStat(item, stat); err != nil {
-		log.Println(err)
-	}
 	parseMemoryFiles(item, stat)
 
 	memoryAnon.WithLabelValues(item).Set(float64(stat.Anon))
@@ -401,13 +451,18 @@ func cgroupMemoryMetrics(item string, cadvisorMemoryMetrics bool) {
 	memoryLow.WithLabelValues(item).Set(float64(stat.Low))
 	memoryMax.WithLabelValues(item).Set(float64(stat.Max))
 	memoryMin.WithLabelValues(item).Set(float64(stat.Min))
+	memoryEventsLow.WithLabelValues(item).Set(float64(stat.EventsLow))
+	memoryEventsHigh.WithLabelValues(item).Set(float64(stat.EventsHigh))
+	memoryEventsMax.WithLabelValues(item).Set(float64(stat.EventsMax))
+	memoryEventsOom.WithLabelValues(item).Set(float64(stat.EventsOom))
+	memoryEventsOomKill.WithLabelValues(item).Set(float64(stat.EventsOomKill))
 
 	if cadvisorMemoryMetrics {
-		memoryCache.WithLabelValues(item).Set(float64(0))
-		memoryFailCnt.WithLabelValues(item).Set(float64(0))
+		memoryCache.WithLabelValues(item).Set(float64(stat.File))
+		memoryFailCnt.WithLabelValues(item).Set(float64(stat.EventsMax))
 		memoryMaxUsage.WithLabelValues(item).Set(float64(0))
 		memoryUsage.WithLabelValues(item).Set(float64(stat.Current))
-		memoryRss.WithLabelValues(item).Set(float64(0))
+		memoryRss.WithLabelValues(item).Set(float64(stat.Anon))
 		memorySwap.WithLabelValues(item).Set(float64(0))
 
 		var workingSet uint64
@@ -424,8 +479,8 @@ func cgroupMemoryMetrics(item string, cadvisorMemoryMetrics bool) {
 	}
 }
 
-func parseMemoryStat(item string, stat *memoryStat) error {
-	file, err := os.Open(filepath.Join(cgDir, item, "memory.stat"))
+func parseMemoryKvFile(item string, f string, stat *memoryStat) error {
+	file, err := os.Open(filepath.Join(cgDir, item, f))
 	if err != nil {
 		return err
 	}
@@ -446,34 +501,45 @@ func parseMemoryStat(item string, stat *memoryStat) error {
 		return err
 	}
 
-	stat.Anon = raw["anon"]
-	stat.File = raw["file"]
-	stat.KernelStack = raw["kernel_stack"]
-	stat.Slab = raw["slab"]
-	stat.Sock = raw["sock"]
-	stat.Shmem = raw["shmem"]
-	stat.FileMapped = raw["file_mapped"]
-	stat.FileDirty = raw["file_dirty"]
-	stat.FileWriteback = raw["file_writeback"]
-	stat.InactiveAnon = raw["inactive_anon"]
-	stat.ActiveAnon = raw["active_anon"]
-	stat.InactiveFile = raw["inactive_file"]
-	stat.ActiveFile = raw["active_file"]
-	stat.Unevictable = raw["unevictable"]
-	stat.SlabReclaimable = raw["slab_reclaimable"]
-	stat.SlabUnreclaimable = raw["slab_unreclaimable"]
-	stat.Pgfault = raw["pgfault"]
-	stat.Pgmajfault = raw["pgmajfault"]
-	stat.Pgrefill = raw["pgrefill"]
-	stat.Pgscan = raw["pgscan"]
-	stat.Pgsteal = raw["pgsteal"]
-	stat.Pgactivate = raw["pgactivate"]
-	stat.Pgdeactivate = raw["pgdeactivate"]
-	stat.Pglazyfree = raw["pglazyfree"]
-	stat.Pglazyfreed = raw["pglazyfreed"]
-	stat.WorkingsetRefault = raw["workingset_refault"]
-	stat.WorkingsetActivate = raw["workingset_activate"]
-	stat.WorkingsetNodereclaim = raw["workingset_nodereclaim"]
+	if f == "memory.stat" {
+		stat.Anon = raw["anon"]
+		stat.File = raw["file"]
+		stat.KernelStack = raw["kernel_stack"]
+		stat.Slab = raw["slab"]
+		stat.Sock = raw["sock"]
+		stat.Shmem = raw["shmem"]
+		stat.FileMapped = raw["file_mapped"]
+		stat.FileDirty = raw["file_dirty"]
+		stat.FileWriteback = raw["file_writeback"]
+		stat.InactiveAnon = raw["inactive_anon"]
+		stat.ActiveAnon = raw["active_anon"]
+		stat.InactiveFile = raw["inactive_file"]
+		stat.ActiveFile = raw["active_file"]
+		stat.Unevictable = raw["unevictable"]
+		stat.SlabReclaimable = raw["slab_reclaimable"]
+		stat.SlabUnreclaimable = raw["slab_unreclaimable"]
+		stat.Pgfault = raw["pgfault"]
+		stat.Pgmajfault = raw["pgmajfault"]
+		stat.Pgrefill = raw["pgrefill"]
+		stat.Pgscan = raw["pgscan"]
+		stat.Pgsteal = raw["pgsteal"]
+		stat.Pgactivate = raw["pgactivate"]
+		stat.Pgdeactivate = raw["pgdeactivate"]
+		stat.Pglazyfree = raw["pglazyfree"]
+		stat.Pglazyfreed = raw["pglazyfreed"]
+		stat.WorkingsetRefault = raw["workingset_refault"]
+		stat.WorkingsetActivate = raw["workingset_activate"]
+		stat.WorkingsetNodereclaim = raw["workingset_nodereclaim"]
+	}
+
+	if f == "memory.events" {
+		stat.EventsLow = raw["low"]
+		stat.EventsHigh = raw["high"]
+		stat.EventsMax = raw["max"]
+		stat.EventsOom = raw["oom"]
+		stat.EventsOomKill = raw["oom_kill"]
+
+	}
 
 	return nil
 }
@@ -488,8 +554,10 @@ func parseMemoryFiles(item string, stat *memoryStat) {
 
 	raw := make(map[string]uint64)
 	for _, f := range memoryFiles {
-		// memory.stat file is parsed in parseMemoryStat func
 		if f == "memory.stat" || f == "memory.events" {
+			if err := parseMemoryKvFile(item, f, stat); err != nil {
+				log.Println(err)
+			}
 			continue
 		}
 
