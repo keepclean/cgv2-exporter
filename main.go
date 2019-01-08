@@ -16,15 +16,17 @@ import (
 const cgDir string = "/sys/fs/cgroup/system.slice/"
 
 var (
-	argIP           string
-	argPort         int
-	cadvisorMetrics bool
+	argIP            string
+	argPort          int
+	cadvisorMetrics  bool
+	scrapingInterval uint
 )
 
 func init() {
 	flag.StringVar(&argIP, "listen_ip", "", "IP to listen on, defaults to all IPs")
 	flag.IntVar(&argPort, "port", 8888, "port to listen")
 	flag.BoolVar(&cadvisorMetrics, "cadvisor_metrics", false, "Add to exported metrics cadvisor style metrics")
+	flag.UintVar(&scrapingInterval, "scraping_interval", 5, "Scraping interval in seconds")
 	flag.Parse()
 }
 
@@ -43,7 +45,13 @@ func main() {
 		close(idleConnsClosed)
 	}()
 
-	go cgroupMetrics(hasController("memory"), hasController("cpu"), hasController("io"), cadvisorMetrics)
+	go cgroupMetrics(
+		hasController("memory"),
+		hasController("cpu"),
+		hasController("io"),
+		cadvisorMetrics,
+		scrapingInterval,
+	)
 
 	http.Handle("/metrics", promhttp.Handler())
 

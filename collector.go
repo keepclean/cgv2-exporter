@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-func cgroupMetrics(hasMemoryController, hasCPUController, hasIOController bool, cadvisorMetrics bool) {
+func cgroupMetrics(hasMemoryController, hasCPUController, hasIOController, cadvisorMetrics bool, scrapingInterval uint) {
 	blockDevices()
 
 	for {
@@ -24,6 +24,6 @@ func cgroupMetrics(hasMemoryController, hasCPUController, hasIOController bool, 
 			}
 		}
 
-		time.Sleep(5 * time.Second)
+		time.Sleep(time.Duration(scrapingInterval) * time.Second)
 	}
 }
