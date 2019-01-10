@@ -2,7 +2,7 @@
 
 cgv2-exporter - is a simple Prometheus exporter for unified cgroup
 
-Currently supports cpu, io, memory controllers.
+Currently supports cpu, io, memory controllers and work with systemd services only
 
 ```
 $ ./cgv2-exporter --help
