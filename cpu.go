@@ -64,22 +64,22 @@ var (
 	)
 )
 
-func cgroupCPUMetrics(item string) {
+func cgroupCPUMetrics(service string) {
 	stat := &cpuStat{}
-	if err := parseCPUStat(item, stat); err != nil {
+	if err := parseCPUStat(service, stat); err != nil {
 		log.Println(err)
 	}
 
-	cpuUsage.WithLabelValues(item).Set(stat.Usage)
-	cpuUser.WithLabelValues(item).Set(stat.User)
-	cpuSystem.WithLabelValues(item).Set(stat.System)
-	cpuNrPeriods.WithLabelValues(item).Set(stat.NrPeriods)
-	cpuNrThrottled.WithLabelValues(item).Set(stat.NrThrottled)
-	cpuThrottled.WithLabelValues(item).Set(stat.Throttled)
+	cpuUsage.WithLabelValues(service).Set(stat.Usage)
+	cpuUser.WithLabelValues(service).Set(stat.User)
+	cpuSystem.WithLabelValues(service).Set(stat.System)
+	cpuNrPeriods.WithLabelValues(service).Set(stat.NrPeriods)
+	cpuNrThrottled.WithLabelValues(service).Set(stat.NrThrottled)
+	cpuThrottled.WithLabelValues(service).Set(stat.Throttled)
 }
 
-func parseCPUStat(item string, stat *cpuStat) error {
-	file, err := os.Open(filepath.Join(cgDir, item, "cpu.stat"))
+func parseCPUStat(service string, stat *cpuStat) error {
+	file, err := os.Open(filepath.Join(cgDir, service, "cpu.stat"))
 	if err != nil {
 		return err
 	}

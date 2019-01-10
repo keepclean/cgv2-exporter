@@ -1,26 +1,31 @@
 package main
 
 import (
+	"log"
 	"time"
 )
 
-func cgroupMetrics(hasMemoryController, hasCPUController, hasIOController, cadvisorMetrics bool, scrapingInterval uint) {
+func cgroupMetrics(cadvisorMetrics bool, scrapingInterval uint) {
 	blockDevices()
+	controllers := cgroupControllers()
 
 	for {
-		cgItems := cgServices()
+		services, err := systemdServices()
+		if err != nil {
+			log.Println("An error has happned while discovering systemd services", err)
+		}
 
-		for _, item := range cgItems {
-			if hasMemoryController {
-				go cgroupMemoryMetrics(item, cadvisorMetrics)
+		for _, service := range services {
+			if controllers["memory"] {
+				go cgroupMemoryMetrics(service, cadvisorMetrics)
 			}
 
-			if hasCPUController {
-				go cgroupCPUMetrics(item)
+			if controllers["cpu"] {
+				go cgroupCPUMetrics(service)
 			}
 
-			if hasIOController {
-				go cgroupIOMetrics(item, cadvisorMetrics)
+			if controllers["io"] {
+				go cgroupIOMetrics(service, cadvisorMetrics)
 			}
 		}
 

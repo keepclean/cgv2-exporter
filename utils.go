@@ -35,32 +35,47 @@ func closeFile(c io.Closer) {
 	}
 }
 
-func cgServices() (items []string) {
+func systemdServices() ([]string, error) {
+	var services []string
 	entries, err := ioutil.ReadDir(cgDir)
 	if err != nil {
-		log.Fatal(err)
+		return services, err
 	}
 
-	for _, item := range entries {
-		if !item.IsDir() {
+	for _, entry := range entries {
+		if !entry.IsDir() {
 			continue
 		}
-		if !strings.HasSuffix(item.Name(), ".service") {
+		if !strings.HasSuffix(entry.Name(), ".service") {
 			continue
 		}
-		items = append(items, item.Name())
+		services = append(services, entry.Name())
+	}
+
+	return services, nil
+}
+
+func cgroupControllers() (controllers map[string]bool) {
+	controllers = make(map[string]bool)
+	for _, c := range []string{"memory", "cpu", "io"} {
+		v, err := hasController(c)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		controllers[c] = v
 	}
 
 	return
 }
 
-func hasController(c string) bool {
+func hasController(c string) (bool, error) {
 	file, err := ioutil.ReadFile(filepath.Join(cgDir, "cgroup.subtree_control"))
 	if err != nil {
-		log.Fatalf("Can't check availability cgroups controllers: %v", err)
+		return false, fmt.Errorf("Can't check availability %q cgroups controllers: %v", c, err)
 	}
 
-	return strings.Contains(string(file), c)
+	return strings.Contains(string(file), c), nil
 }
 
 func totalRAMMemory() uint64 {
@@ -69,8 +84,8 @@ func totalRAMMemory() uint64 {
 	return info.Totalram
 }
 
-func controllerFiles(controller, item string) ([]string, error) {
-	entries, err := ioutil.ReadDir(filepath.Join(cgDir, item))
+func controllerFiles(controller, service string) ([]string, error) {
+	entries, err := ioutil.ReadDir(filepath.Join(cgDir, service))
 	if err != nil {
 		return []string{}, err
 	}

@@ -414,73 +414,73 @@ var (
 	)
 )
 
-func cgroupMemoryMetrics(item string, cadvisorMetrics bool) {
+func cgroupMemoryMetrics(service string, cadvisorMetrics bool) {
 	stat := &memoryStat{}
-	parseMemoryFiles(item, stat)
+	parseMemoryFiles(service, stat)
 
-	memoryAnon.WithLabelValues(item).Set(float64(stat.Anon))
-	memoryFile.WithLabelValues(item).Set(float64(stat.File))
-	memoryKernelStack.WithLabelValues(item).Set(float64(stat.KernelStack))
-	memorySlab.WithLabelValues(item).Set(float64(stat.Slab))
-	memorySock.WithLabelValues(item).Set(float64(stat.Sock))
-	memoryShmem.WithLabelValues(item).Set(float64(stat.Shmem))
-	memoryFileMapped.WithLabelValues(item).Set(float64(stat.FileMapped))
-	memoryFileDirty.WithLabelValues(item).Set(float64(stat.FileDirty))
-	memoryFileWriteback.WithLabelValues(item).Set(float64(stat.FileWriteback))
-	memoryInactiveAnon.WithLabelValues(item).Set(float64(stat.InactiveAnon))
-	memoryActiveAnon.WithLabelValues(item).Set(float64(stat.ActiveAnon))
-	memoryInactiveFile.WithLabelValues(item).Set(float64(stat.InactiveFile))
-	memoryActiveFile.WithLabelValues(item).Set(float64(stat.ActiveFile))
-	memoryUnevictable.WithLabelValues(item).Set(float64(stat.Unevictable))
-	memorySlabReclaimable.WithLabelValues(item).Set(float64(stat.SlabReclaimable))
-	memorySlabUnreclaimable.WithLabelValues(item).Set(float64(stat.SlabUnreclaimable))
-	memoryPgfault.WithLabelValues(item).Set(float64(stat.Pgfault))
-	memoryPgmajfault.WithLabelValues(item).Set(float64(stat.Pgmajfault))
-	memoryPgrefill.WithLabelValues(item).Set(float64(stat.Pgrefill))
-	memoryPgscan.WithLabelValues(item).Set(float64(stat.Pgscan))
-	memoryPgsteal.WithLabelValues(item).Set(float64(stat.Pgsteal))
-	memoryPgactivate.WithLabelValues(item).Set(float64(stat.Pgactivate))
-	memoryPgdeactivate.WithLabelValues(item).Set(float64(stat.Pgdeactivate))
-	memoryPglazyfree.WithLabelValues(item).Set(float64(stat.Pglazyfree))
-	memoryPglazyfreed.WithLabelValues(item).Set(float64(stat.Pglazyfreed))
-	memoryWorkingsetRefault.WithLabelValues(item).Set(float64(stat.WorkingsetRefault))
-	memoryWorkingsetActivate.WithLabelValues(item).Set(float64(stat.WorkingsetActivate))
-	memoryWorkingsetNodereclaim.WithLabelValues(item).Set(float64(stat.WorkingsetNodereclaim))
-	memoryCurrent.WithLabelValues(item).Set(float64(stat.Current))
-	memoryHigh.WithLabelValues(item).Set(float64(stat.High))
-	memoryLow.WithLabelValues(item).Set(float64(stat.Low))
-	memoryMax.WithLabelValues(item).Set(float64(stat.Max))
-	memoryMin.WithLabelValues(item).Set(float64(stat.Min))
-	memoryEventsLow.WithLabelValues(item).Set(float64(stat.EventsLow))
-	memoryEventsHigh.WithLabelValues(item).Set(float64(stat.EventsHigh))
-	memoryEventsMax.WithLabelValues(item).Set(float64(stat.EventsMax))
-	memoryEventsOom.WithLabelValues(item).Set(float64(stat.EventsOom))
-	memoryEventsOomKill.WithLabelValues(item).Set(float64(stat.EventsOomKill))
+	memoryAnon.WithLabelValues(service).Set(float64(stat.Anon))
+	memoryFile.WithLabelValues(service).Set(float64(stat.File))
+	memoryKernelStack.WithLabelValues(service).Set(float64(stat.KernelStack))
+	memorySlab.WithLabelValues(service).Set(float64(stat.Slab))
+	memorySock.WithLabelValues(service).Set(float64(stat.Sock))
+	memoryShmem.WithLabelValues(service).Set(float64(stat.Shmem))
+	memoryFileMapped.WithLabelValues(service).Set(float64(stat.FileMapped))
+	memoryFileDirty.WithLabelValues(service).Set(float64(stat.FileDirty))
+	memoryFileWriteback.WithLabelValues(service).Set(float64(stat.FileWriteback))
+	memoryInactiveAnon.WithLabelValues(service).Set(float64(stat.InactiveAnon))
+	memoryActiveAnon.WithLabelValues(service).Set(float64(stat.ActiveAnon))
+	memoryInactiveFile.WithLabelValues(service).Set(float64(stat.InactiveFile))
+	memoryActiveFile.WithLabelValues(service).Set(float64(stat.ActiveFile))
+	memoryUnevictable.WithLabelValues(service).Set(float64(stat.Unevictable))
+	memorySlabReclaimable.WithLabelValues(service).Set(float64(stat.SlabReclaimable))
+	memorySlabUnreclaimable.WithLabelValues(service).Set(float64(stat.SlabUnreclaimable))
+	memoryPgfault.WithLabelValues(service).Set(float64(stat.Pgfault))
+	memoryPgmajfault.WithLabelValues(service).Set(float64(stat.Pgmajfault))
+	memoryPgrefill.WithLabelValues(service).Set(float64(stat.Pgrefill))
+	memoryPgscan.WithLabelValues(service).Set(float64(stat.Pgscan))
+	memoryPgsteal.WithLabelValues(service).Set(float64(stat.Pgsteal))
+	memoryPgactivate.WithLabelValues(service).Set(float64(stat.Pgactivate))
+	memoryPgdeactivate.WithLabelValues(service).Set(float64(stat.Pgdeactivate))
+	memoryPglazyfree.WithLabelValues(service).Set(float64(stat.Pglazyfree))
+	memoryPglazyfreed.WithLabelValues(service).Set(float64(stat.Pglazyfreed))
+	memoryWorkingsetRefault.WithLabelValues(service).Set(float64(stat.WorkingsetRefault))
+	memoryWorkingsetActivate.WithLabelValues(service).Set(float64(stat.WorkingsetActivate))
+	memoryWorkingsetNodereclaim.WithLabelValues(service).Set(float64(stat.WorkingsetNodereclaim))
+	memoryCurrent.WithLabelValues(service).Set(float64(stat.Current))
+	memoryHigh.WithLabelValues(service).Set(float64(stat.High))
+	memoryLow.WithLabelValues(service).Set(float64(stat.Low))
+	memoryMax.WithLabelValues(service).Set(float64(stat.Max))
+	memoryMin.WithLabelValues(service).Set(float64(stat.Min))
+	memoryEventsLow.WithLabelValues(service).Set(float64(stat.EventsLow))
+	memoryEventsHigh.WithLabelValues(service).Set(float64(stat.EventsHigh))
+	memoryEventsMax.WithLabelValues(service).Set(float64(stat.EventsMax))
+	memoryEventsOom.WithLabelValues(service).Set(float64(stat.EventsOom))
+	memoryEventsOomKill.WithLabelValues(service).Set(float64(stat.EventsOomKill))
 
 	if cadvisorMetrics {
-		memoryCache.WithLabelValues(item).Set(float64(stat.File))
-		memoryFailCnt.WithLabelValues(item).Set(float64(stat.EventsMax))
-		memoryMaxUsage.WithLabelValues(item).Set(float64(0)) // TODO
-		memoryUsage.WithLabelValues(item).Set(float64(stat.Current))
-		memoryRss.WithLabelValues(item).Set(float64(stat.Anon))
-		memorySwap.WithLabelValues(item).Set(float64(0)) // TODO
+		memoryCache.WithLabelValues(service).Set(float64(stat.File))
+		memoryFailCnt.WithLabelValues(service).Set(float64(stat.EventsMax))
+		memoryMaxUsage.WithLabelValues(service).Set(float64(0)) // TODO
+		memoryUsage.WithLabelValues(service).Set(float64(stat.Current))
+		memoryRss.WithLabelValues(service).Set(float64(stat.Anon))
+		memorySwap.WithLabelValues(service).Set(float64(0)) // TODO
 
 		var workingSet uint64
 		if !(stat.Current < stat.InactiveFile) {
 			workingSet = stat.Current - stat.InactiveFile
 		}
-		memoryWorkingSet.WithLabelValues(item).Set(float64(workingSet))
+		memoryWorkingSet.WithLabelValues(service).Set(float64(workingSet))
 
-		memorySpecLimit.WithLabelValues(item).Set(float64(stat.Max))
-		memorySpecReservationLimit.WithLabelValues(item).Set(float64(0)) // TODO
-		memorySpecSwapLimit.WithLabelValues(item).Set(float64(0))        // TODO
-		memoryCadvisorPgfaults.WithLabelValues(item, "container", "pgfault").Set(float64(stat.Pgfault))
-		memoryCadvisorPgfaults.WithLabelValues(item, "container", "pgmajfault").Set(float64(stat.Pgmajfault))
+		memorySpecLimit.WithLabelValues(service).Set(float64(stat.Max))
+		memorySpecReservationLimit.WithLabelValues(service).Set(float64(0)) // TODO
+		memorySpecSwapLimit.WithLabelValues(service).Set(float64(0))        // TODO
+		memoryCadvisorPgfaults.WithLabelValues(service, "container", "pgfault").Set(float64(stat.Pgfault))
+		memoryCadvisorPgfaults.WithLabelValues(service, "container", "pgmajfault").Set(float64(stat.Pgmajfault))
 	}
 }
 
-func parseMemoryKvFile(item string, f string, stat *memoryStat) error {
-	file, err := os.Open(filepath.Join(cgDir, item, f))
+func parseMemoryKvFile(service string, f string, stat *memoryStat) error {
+	file, err := os.Open(filepath.Join(cgDir, service, f))
 	if err != nil {
 		return err
 	}
@@ -546,8 +546,8 @@ func parseMemoryKvFile(item string, f string, stat *memoryStat) error {
 
 var totalRAM = totalRAMMemory()
 
-func parseMemoryFiles(item string, stat *memoryStat) {
-	memoryFiles, err := controllerFiles("memory", item)
+func parseMemoryFiles(service string, stat *memoryStat) {
+	memoryFiles, err := controllerFiles("memory", service)
 	if err != nil {
 		log.Println(err)
 	}
@@ -555,13 +555,13 @@ func parseMemoryFiles(item string, stat *memoryStat) {
 	raw := make(map[string]uint64)
 	for _, f := range memoryFiles {
 		if f == "memory.stat" || f == "memory.events" {
-			if err := parseMemoryKvFile(item, f, stat); err != nil {
+			if err := parseMemoryKvFile(service, f, stat); err != nil {
 				log.Println(err)
 			}
 			continue
 		}
 
-		file, err := ioutil.ReadFile(filepath.Join(cgDir, item, f))
+		file, err := ioutil.ReadFile(filepath.Join(cgDir, service, f))
 		if err != nil {
 			log.Println(err)
 			continue

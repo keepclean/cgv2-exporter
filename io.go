@@ -82,30 +82,30 @@ var (
 	)
 )
 
-func cgroupIOMetrics(item string, cadvisorMetrics bool) {
-	stat, err := parseIOStat(item)
+func cgroupIOMetrics(service string, cadvisorMetrics bool) {
+	stat, err := parseIOStat(service)
 	if err != nil {
 		log.Println(err)
 	}
 
 	for d, s := range stat {
-		ioRbytes.WithLabelValues(item, d).Set(s["rbytes"])
-		ioWbytes.WithLabelValues(item, d).Set(s["wbytes"])
-		ioRios.WithLabelValues(item, d).Set(s["rios"])
-		ioWios.WithLabelValues(item, d).Set(s["wios"])
+		ioRbytes.WithLabelValues(service, d).Set(s["rbytes"])
+		ioWbytes.WithLabelValues(service, d).Set(s["wbytes"])
+		ioRios.WithLabelValues(service, d).Set(s["rios"])
+		ioWios.WithLabelValues(service, d).Set(s["wios"])
 
 		if cadvisorMetrics {
 			d = fmt.Sprint("/dev/", d)
-			ioCadvisorRbytes.WithLabelValues(item, d).Set(s["rbytes"])
-			ioCadvisorWbytes.WithLabelValues(item, d).Set(s["wbytes"])
-			ioCadvisorRios.WithLabelValues(item, d).Set(s["rios"])
-			ioCadvisorWios.WithLabelValues(item, d).Set(s["wios"])
+			ioCadvisorRbytes.WithLabelValues(service, d).Set(s["rbytes"])
+			ioCadvisorWbytes.WithLabelValues(service, d).Set(s["wbytes"])
+			ioCadvisorRios.WithLabelValues(service, d).Set(s["rios"])
+			ioCadvisorWios.WithLabelValues(service, d).Set(s["wios"])
 		}
 	}
 }
 
-func parseIOStat(item string) (map[string]map[string]float64, error) {
-	file, err := os.Open(filepath.Join(cgDir, item, "io.stat"))
+func parseIOStat(service string) (map[string]map[string]float64, error) {
+	file, err := os.Open(filepath.Join(cgDir, service, "io.stat"))
 	if err != nil {
 		return map[string]map[string]float64{}, err
 	}
