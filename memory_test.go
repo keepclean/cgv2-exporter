@@ -125,7 +125,7 @@ func TestCgroupMemoryMetrics(t *testing.T) {
 		}
 	}
 
-	// TODO Make test a bit smart
+	// TODO Make test a bit smarter
 	cgroupMemoryMetrics(service, false)
 	if _, err := memoryMax.GetMetricWithLabelValues(service); err != nil {
 		t.Error("Something goes wrong... ", err)
