@@ -42,38 +42,30 @@ func TestHasController(t *testing.T) {
 	}
 
 	cgDir = "./system.slice"
-	func() {
-		_, err := hasController("memory")
-		if err == nil {
-			t.Error("Something goes wrong because it’s impossible to receive useful information from unexisted file")
-		}
-	}()
+	_, err = hasController("memory")
+	if err == nil {
+		t.Error("Something goes wrong because it’s impossible to receive useful information from unexisted file")
+	}
 
 	cgDir = "./"
-	func() {
-		_, err := hasController("gpu")
-		if err != nil {
-			t.Error(err)
-		}
-	}()
+	_, err = hasController("gpu")
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestSystemdServices(t *testing.T) {
 	cgDir = "./folder"
-	func() {
-		_, err := systemdServices()
-		if err == nil {
-			t.Error("Something goes wrong because it’s impossible to receive useful information from unexisted folder")
-		}
-	}()
+	_, err := systemdServices()
+	if err == nil {
+		t.Error("Something goes wrong because it’s impossible to receive useful information from unexisted folder")
+	}
 
 	cgDir = "./"
-	func() {
-		_, err := systemdServices()
-		if err != nil {
-			t.Error(err)
-		}
-	}()
+	_, err = systemdServices()
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestControllerFiles(t *testing.T) {
@@ -91,21 +83,17 @@ func TestControllerFiles(t *testing.T) {
 	defer os.RemoveAll(serviceName)
 
 	cgDir = "./folder"
-	func() {
-		_, err := controllerFiles("io", serviceName)
-		if err == nil {
-			t.Error("Something goes wrong because it’s impossible to recieve useful information from unexisted folder")
-		}
-	}()
+	_, err = controllerFiles("io", serviceName)
+	if err == nil {
+		t.Error("Something goes wrong because it’s impossible to recieve useful information from unexisted folder")
+	}
 
 	cgDir = "./"
-	func() {
-		files, err := controllerFiles("io", serviceName)
-		if err != nil {
-			t.Error(err)
-		}
-		if files[0] != controllerFile {
-			t.Errorf("Getting elements for %q controller is failed", "io")
-		}
-	}()
+	files, err := controllerFiles("io", serviceName)
+	if err != nil {
+		t.Error(err)
+	}
+	if files[0] != controllerFile {
+		t.Errorf("Getting elements for %q controller is failed", "io")
+	}
 }

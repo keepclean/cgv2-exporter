@@ -10,8 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	"golang.org/x/sys/unix"
 )
 
 func parseKV(s string) (string, uint64, error) {
@@ -76,12 +74,6 @@ func hasController(c string) (bool, error) {
 	}
 
 	return strings.Contains(string(file), c), nil
-}
-
-func totalRAMMemory() uint64 {
-	info := &unix.Sysinfo_t{}
-	unix.Sysinfo(info)
-	return info.Totalram
 }
 
 func controllerFiles(controller, service string) ([]string, error) {
