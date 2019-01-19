@@ -4,8 +4,8 @@ package main
 
 import "golang.org/x/sys/unix"
 
-func totalRAMMemory() uint64 {
+func totalRAMMemory() float64 {
 	info := &unix.Sysinfo_t{}
 	unix.Sysinfo(info)
-	return info.Totalram
+	return float64(info.Totalram)
 }

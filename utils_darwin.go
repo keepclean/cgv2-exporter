@@ -3,6 +3,6 @@
 package main
 
 // Fake func for running "go test" on macos
-func totalRAMMemory() uint64 {
+func totalRAMMemory() float64 {
 	return 99999999
 }

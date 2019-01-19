@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -12,13 +11,13 @@ import (
 	"strings"
 )
 
-func parseKV(s string) (string, uint64, error) {
+func parseKV(s string) (string, float64, error) {
 	fields := strings.Fields(s)
 	if len(fields) != 2 {
 		return "", 0, errors.New("Invalid format")
 	}
 
-	v, err := strconv.ParseUint(fields[1], 10, 64)
+	v, err := strconv.ParseFloat(fields[1], 64)
 	if err != nil {
 		return "", 0, err
 	}
@@ -53,41 +52,15 @@ func systemdServices() ([]string, error) {
 	return services, nil
 }
 
-func cgroupControllers() (controllers map[string]bool) {
-	controllers = make(map[string]bool)
-	for _, c := range []string{"memory", "cpu", "io"} {
-		v, err := hasController(c)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		controllers[c] = v
-	}
-
-	return
-}
-
-func hasController(c string) (bool, error) {
-	file, err := ioutil.ReadFile(filepath.Join(cgDir, "cgroup.subtree_control"))
-	if err != nil {
-		return false, fmt.Errorf("Can't check availability %q cgroups controllers: %v", c, err)
-	}
-
-	return strings.Contains(string(file), c), nil
-}
-
-func controllerFiles(controller, service string) ([]string, error) {
+func cgroupFiles(service string) ([]string, error) {
+	var files []string
 	entries, err := ioutil.ReadDir(filepath.Join(cgDir, service))
 	if err != nil {
-		return []string{}, err
+		return files, err
 	}
 
-	var files []string
 	for _, entry := range entries {
 		if entry.IsDir() {
-			continue
-		}
-		if !strings.HasPrefix(entry.Name(), fmt.Sprint(controller, ".")) {
 			continue
 		}
 		files = append(files, entry.Name())

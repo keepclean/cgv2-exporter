@@ -10,22 +10,21 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
-	argIP            string
-	argPort          uint
-	cadvisorMetrics  bool
-	scrapingInterval uint
-	cgDir            = "/sys/fs/cgroup/system.slice/"
+	argIP           string
+	argPort         uint
+	cadvisorMetrics bool
+	cgDir           = "/sys/fs/cgroup/system.slice/"
 )
 
 func init() {
 	flag.StringVar(&argIP, "listen_ip", "", "IP to listen on, defaults to all IPs")
 	flag.UintVar(&argPort, "port", 8888, "port to listen")
-	flag.BoolVar(&cadvisorMetrics, "cadvisor_metrics", false, "Add to exported metrics cadvisor style metrics")
-	flag.UintVar(&scrapingInterval, "scraping_interval", 5, "Scraping interval in seconds")
+	flag.BoolVar(&cadvisorMetrics, "cadvisor_metrics", false, "Add to exported metrics cadvisor in style metrics")
 	flag.Parse()
 }
 
@@ -33,9 +32,9 @@ func main() {
 	var srv http.Server
 	idleConnsClosed := make(chan struct{})
 	go func() {
-		ch := make(chan os.Signal, 1)
-		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
-		<-ch
+		osSignal := make(chan os.Signal, 1)
+		signal.Notify(osSignal, os.Interrupt, os.Kill, syscall.SIGTERM)
+		<-osSignal
 
 		srv.SetKeepAlivesEnabled(false)
 		if err := srv.Shutdown(context.Background()); err != nil {
@@ -44,17 +43,23 @@ func main() {
 		close(idleConnsClosed)
 	}()
 
-	go cgroupMetrics(cadvisorMetrics, scrapingInterval)
+	blockDevices()
+
+	exporter, err := newExporter(cpuMetrics, ioMetrics, memoryMetrics)
+	if err != nil {
+		log.Fatal(err)
+	}
+	prometheus.MustRegister(exporter)
 
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`<html>
-             <head><title>CGv2 Exporter for systemd services</title></head>
+             <head><title>Exporter for unified cgroup of systemd services</title></head>
              <body>
-             <h1>CGv2 Exporter for systemd services</h1>
+             <h1>Exporter for unified cgroup of systemd services</h1>
              <p><a href='/metrics'>Metrics</a></p>
              </body>
-             </html>`))
+        </html>`))
 	})
 
 	srv.Addr = fmt.Sprintf("%s:%d", argIP, argPort)
