@@ -47,6 +47,15 @@ func main() {
 	go cgroupMetrics(cadvisorMetrics, scrapingInterval)
 
 	http.Handle("/metrics", promhttp.Handler())
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`<html>
+             <head><title>CGv2 Exporter for systemd services</title></head>
+             <body>
+             <h1>CGv2 Exporter for systemd services</h1>
+             <p><a href='/metrics'>Metrics</a></p>
+             </body>
+             </html>`))
+	})
 
 	srv.Addr = fmt.Sprintf("%s:%d", argIP, argPort)
 	log.Println("Starting web server on: ", srv.Addr)
