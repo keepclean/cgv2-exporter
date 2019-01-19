@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"testing"
 )
 
@@ -29,31 +27,6 @@ func TestParseKV(t *testing.T) {
 	}
 }
 
-func TestHasController(t *testing.T) {
-	cgroupFile, err := os.Create("cgroup.subtree_control")
-	if err != nil {
-		t.Error(err)
-	}
-	defer os.Remove(cgroupFile.Name())
-
-	_, err = cgroupFile.WriteString("memory io gpu cpu ram")
-	if err != nil {
-		t.Error(err)
-	}
-
-	cgDir = "./system.slice"
-	_, err = hasController("memory")
-	if err == nil {
-		t.Error("Something goes wrong because it’s impossible to receive useful information from unexisted file")
-	}
-
-	cgDir = "./"
-	_, err = hasController("gpu")
-	if err != nil {
-		t.Error(err)
-	}
-}
-
 func TestSystemdServices(t *testing.T) {
 	cgDir = "./folder"
 	_, err := systemdServices()
@@ -65,35 +38,5 @@ func TestSystemdServices(t *testing.T) {
 	_, err = systemdServices()
 	if err != nil {
 		t.Error(err)
-	}
-}
-
-func TestControllerFiles(t *testing.T) {
-	serviceName := "sssss"
-	err := os.MkdirAll(serviceName, 0755)
-	if err != nil {
-		t.Error(err)
-	}
-
-	controllerFile := "io.stat"
-	_, err = os.Create(fmt.Sprint(serviceName, "/", controllerFile))
-	if err != nil {
-		t.Error(err)
-	}
-	defer os.RemoveAll(serviceName)
-
-	cgDir = "./folder"
-	_, err = controllerFiles("io", serviceName)
-	if err == nil {
-		t.Error("Something goes wrong because it’s impossible to recieve useful information from unexisted folder")
-	}
-
-	cgDir = "./"
-	files, err := controllerFiles("io", serviceName)
-	if err != nil {
-		t.Error(err)
-	}
-	if files[0] != controllerFile {
-		t.Errorf("Getting elements for %q controller is failed", "io")
 	}
 }
