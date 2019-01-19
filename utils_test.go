@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"testing"
 )
 
@@ -36,6 +38,32 @@ func TestSystemdServices(t *testing.T) {
 
 	cgDir = "./"
 	_, err = systemdServices()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestCgroupFiles(t *testing.T) {
+	cgDir = "./folder"
+	service := "s"
+	_, err := cgroupFiles(service)
+	if err == nil {
+		t.Error("Something goes wrong because it’s impossible to receive useful information from unexisted folder")
+	}
+
+	cgDir = "./"
+	err = os.Mkdir(service, 0755)
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.RemoveAll(service)
+
+	_, err = os.Create(fmt.Sprint(service, "/", "memory.stat"))
+	if err != nil {
+		t.Error(err)
+	}
+
+	_, err = cgroupFiles(service)
 	if err != nil {
 		t.Error(err)
 	}

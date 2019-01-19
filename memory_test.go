@@ -63,7 +63,7 @@ func TestParseMemoryKvFile(t *testing.T) {
 func TestParseMemoryFile(t *testing.T) {
 	cgDir = "./"
 	service := "s"
-	testFile := "memory.low"
+	testFiles := []string{"memory.low", "memory.max", "memory.min"}
 	serviceStats := make(map[string]float64)
 
 	err := os.Mkdir(service, 0755)
@@ -72,21 +72,41 @@ func TestParseMemoryFile(t *testing.T) {
 	}
 	defer os.RemoveAll(service)
 
-	f, err := os.Create(fmt.Sprint(service, "/", testFile))
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = f.WriteString("354068")
-	if err != nil {
-		t.Error(err)
+	for _, testFile := range testFiles {
+		f, err := os.Create(fmt.Sprint(service, "/", testFile))
+		if err != nil {
+			t.Error(err)
+		}
+
+		switch testFile {
+		case "memory.low":
+			_, err = f.WriteString("354068")
+		case "memory.max":
+			_, err = f.WriteString("max")
+		case "memory.min":
+			_, err = f.WriteString("min")
+		}
+
+		if err != nil {
+			t.Error(err)
+		}
 	}
 
-	err = parseMemoryFile(service, testFile, serviceStats)
-	if err != nil {
-		t.Error(err)
+	for _, testFile := range testFiles {
+		err = parseMemoryFile(service, testFile, serviceStats)
+		if err != nil {
+			t.Error(err)
+		}
 	}
 
 	if serviceStats["memory.low"] != 354068 {
 		t.Errorf("Something wrong with parsing test memory.stat file: got %v, want 354068", serviceStats["memory.low"])
 	}
+	if serviceStats["memory.max"] != totalRAM {
+		t.Errorf("Something wrong with parsing test memory.stat file: got %v, want %f", serviceStats["memory.max"], totalRAM)
+	}
+	if serviceStats["memory.min"] != 0 {
+		t.Errorf("Something wrong with parsing test memory.stat file: got %v, want 0", serviceStats["memory.min"])
+	}
+
 }

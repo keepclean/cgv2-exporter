@@ -28,7 +28,7 @@ func TestParseCPUKvFile(t *testing.T) {
 	}
 	defer os.RemoveAll(service)
 
-	_, err = f.WriteString("usage_usec 55002")
+	_, err = f.WriteString("usage_usec 55002\nnr_periods 1")
 	if err != nil {
 		t.Error(err)
 	}
@@ -39,5 +39,8 @@ func TestParseCPUKvFile(t *testing.T) {
 
 	if stats["usage_usec"] != (float64(55002) / 1e9) {
 		t.Errorf("Something wrong with parsing test cpu.stat file: got %v, want %f", stats["usage_usec"], (float64(55002) / 1e9))
+	}
+	if stats["nr_periods"] != 1 {
+		t.Errorf("Something wrong with parsing test cpu.stat file: got %v, want 1", stats["nr_periods"])
 	}
 }
