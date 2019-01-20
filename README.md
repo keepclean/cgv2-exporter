@@ -13,6 +13,4 @@ Usage of ./cgv2-exporter:
         IP to listen on, defaults to all IPs
   -port int
         port to listen (default 8888)
-  -scraping_interval uint
-        Scraping interval in seconds (default 5)
 ```
