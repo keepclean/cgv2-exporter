@@ -22,11 +22,11 @@ func parseCPUKvFile(service, f string, serviceStats map[string]float64) error {
 		}
 
 		if strings.HasSuffix(key, "_usec") {
-			serviceStats[key] = float64(value) / 1e9
+			serviceStats[key] = value / 1e9
 			continue
 		}
 
-		serviceStats[key] = float64(value)
+		serviceStats[key] = value
 	}
 
 	return scanner.Err()

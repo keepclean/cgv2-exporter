@@ -31,7 +31,7 @@ func parseIOKvFile(service, f string, serviceStats map[string]map[string]float64
 			kv := strings.Split(substring, "=")
 			v, err := strconv.ParseFloat(kv[1], 64)
 			if err != nil {
-				v = float64(0)
+				v = 0
 			}
 			serviceStats[device][kv[0]] = v
 		}
