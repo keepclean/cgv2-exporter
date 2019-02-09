@@ -37,8 +37,8 @@ func TestParseCPUKvFile(t *testing.T) {
 		t.Error(err)
 	}
 
-	if stats["usage_usec"] != (float64(55002) / 1e9) {
-		t.Errorf("Something wrong with parsing test cpu.stat file: got %v, want %f", stats["usage_usec"], (float64(55002) / 1e9))
+	if stats["usage_usec"] != (float64(55002) / 1e6) {
+		t.Errorf("Something wrong with parsing test cpu.stat file: got %v, want %f", stats["usage_usec"], (float64(55002) / 1e6))
 	}
 	if stats["nr_periods"] != 1 {
 		t.Errorf("Something wrong with parsing test cpu.stat file: got %v, want 1", stats["nr_periods"])
