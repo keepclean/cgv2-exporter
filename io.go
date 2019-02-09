@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -19,10 +18,6 @@ func parseIOKvFile(service, f string, serviceStats map[string]map[string]float64
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
-		if len(fields) != 5 {
-			return errors.New("Invalid io.stat file format")
-		}
-
 		device := devices[fields[0]]
 		for _, substring := range fields[1:] {
 			if serviceStats[device] == nil {

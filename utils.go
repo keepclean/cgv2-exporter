@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -91,7 +92,7 @@ func blockDevices() {
 		}
 
 		device := strings.TrimSpace(string(file))
-		devices[device] = entry.Name()
+		devices[device] = fmt.Sprintf("/dev/%s", entry.Name())
 	}
 
 	return

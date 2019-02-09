@@ -29,12 +29,16 @@ var (
 		"wbytes": newMetric("io", "write_bytes", "Bytes written", ioLabelNames),
 		"rios":   newMetric("io", "read_operations", "Number of read IOs", ioLabelNames),
 		"wios":   newMetric("io", "write_operations", "Number of write IOs", ioLabelNames),
+		"dbytes": newMetric("io", "discarded_bytes", "Number of bytes discarded", ioLabelNames),
+		"dios":   newMetric("io", "discarded_operations", "Number of discard or trim IOs.", ioLabelNames),
 	}
 	cadvisorIOMetrics = map[string]*prometheus.Desc{
 		"rbytes": newMetric("fs", "reads_bytes_total", "Cumulative count of bytes read", ioLabelNames),
 		"wbytes": newMetric("fs", "writes_bytes_total", "Cumulative count of bytes written", ioLabelNames),
 		"rios":   newMetric("fs", "reads_total", "Cumulative count of reads completed", ioLabelNames),
 		"wios":   newMetric("fs", "writes_total", "Cumulative count of writes completed", ioLabelNames),
+		"dbytes": newMetric("fs", "discarded_bytes_total", "Cumulative count of bytes discarded", ioLabelNames),
+		"dios":   newMetric("fs", "discarded_total", "Cumulative count of discard or trim IOs.", ioLabelNames),
 	}
 	memoryMetrics = map[string]*prometheus.Desc{
 		"anon":                   newMetric("memory", "anon_bytes", "Amount of memory used in anonymous mappings such as brk(), sbrk(), and mmap(MAP_ANONYMOUS)", memoryLabelNames),
