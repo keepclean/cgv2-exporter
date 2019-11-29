@@ -9,7 +9,7 @@ import (
 )
 
 func parseIOKvFile(service, f string, serviceStats map[string]map[string]float64) error {
-	file, err := os.Open(filepath.Join(cgDir, service, "io.stat"))
+	file, err := os.Open(filepath.Join(cgDir, service, f))
 	if err != nil {
 		return err
 	}
