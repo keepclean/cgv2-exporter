@@ -94,6 +94,4 @@ func blockDevices() {
 		device := strings.TrimSpace(string(file))
 		devices[device] = fmt.Sprintf("/dev/%s", entry.Name())
 	}
-
-	return
 }

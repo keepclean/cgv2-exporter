@@ -33,7 +33,7 @@ func main() {
 	idleConnsClosed := make(chan struct{})
 	go func() {
 		osSignal := make(chan os.Signal, 1)
-		signal.Notify(osSignal, os.Interrupt, os.Kill, syscall.SIGTERM)
+		signal.Notify(osSignal, os.Interrupt, syscall.SIGTERM)
 		<-osSignal
 
 		srv.SetKeepAlivesEnabled(false)
@@ -53,13 +53,16 @@ func main() {
 
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`<html>
+		_, err := w.Write([]byte(`<html>
              <head><title>Exporter for unified cgroup of systemd services</title></head>
              <body>
              <h1>Exporter for unified cgroup of systemd services</h1>
              <p><a href='/metrics'>Metrics</a></p>
              </body>
         </html>`))
+		if err != nil {
+			log.Println(err)
+		}
 	})
 
 	srv.Addr = fmt.Sprintf("%s:%d", argIP, argPort)
